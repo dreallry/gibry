@@ -1,4 +1,4 @@
-# DigiPus
+# Gibry
 
 A digital library web application for borrowing books, reading tracking, and a member community. Members browse the catalog, borrow physical copies with QR scanning or digital copies with availability windows, earn points and achievements, and take part in clubs, events, and challenges. Staff manage the catalog, loans, and memberships from an admin panel. Fine payments use Midtrans in sandbox mode.
 
