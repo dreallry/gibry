@@ -242,7 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resolvedKelas = lookup.kelas || resolvedKelas;
     }
 
-    const cred = await createUserWithEmailAndPassword(auth, email);
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
 
     try {
       await createUserProfile(cred.user.uid, {

@@ -3,6 +3,16 @@ dist
 .env*
 !.env.example
 *service-account*.json
+*serviceAccount*.json
+*firebase-adminsdk*.json
+credentials.json
+credentials/
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
 *.local
 
 # Firebase Data Connect (unused)
@@ -22,6 +32,22 @@ functions/lib/
 
 # Personal local files (school work, exports)
 output/
+backups/
+uploads/
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+*.bak
+
+# Local tooling and editor state
+.firebase/
+.hermes/
+.idea/
+.vscode/
+coverage/
+*.zip
+*.7z
 
 # OS files
 .DS_Store

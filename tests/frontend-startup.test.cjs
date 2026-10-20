@@ -11,6 +11,36 @@ const environment = {
   VITE_FIREBASE_DATABASE_URL: 'https://demo-digipus.firebaseio.com',
 };
 
+test('registration forwards the supplied password to Firebase account creation', async () => {
+  const source = fs.readFileSync('src/contexts/AuthContext.tsx', 'utf8');
+  const tree = ts.createSourceFile('AuthContext.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  let register;
+  function visit(node) {
+    if (ts.isVariableDeclaration(node) && node.name.getText(tree) === 'register') register = node.initializer;
+    ts.forEachChild(node, visit);
+  }
+  visit(tree);
+  assert.ok(register, 'registration function exists');
+  const code = ts.transpileModule(`const register = ${register.getText(tree)};`, {
+    compilerOptions: { target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const auth = {};
+  const stop = new Error('stop before external account creation');
+  let argumentsReceived;
+  const context = {
+    auth,
+    createUserWithEmailAndPassword: async (...args) => {
+      argumentsReceived = args;
+      throw stop;
+    },
+  };
+  vm.runInNewContext(`${code}\nglobalThis.register = register;`, context);
+  await assert.rejects(context.register('reader@example.invalid', 'test-only-password', {
+    nama: 'Test Reader', username: 'test-reader',
+  }), error => error === stop);
+  assert.deepEqual(argumentsReceived, [auth, 'reader@example.invalid', 'test-only-password']);
+});
+
 function initialize(overrides) {
   const calls = [];
   const source = fs.readFileSync('src/lib/firebase.ts', 'utf8').replaceAll('import.meta.env', 'environment');
