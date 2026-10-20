@@ -1,0 +1,29 @@
+node_modules
+dist
+.env*
+!.env.example
+*service-account*.json
+*.local
+
+# Firebase Data Connect (unused)
+dataconnect/
+src/dataconnect-generated/
+
+# Build artifacts
+*.tsbuildinfo
+
+# Functions build output
+functions/lib/
+
+.vercel
+
+# Local logs
+*.log
+
+# Personal local files (school work, exports)
+output/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini

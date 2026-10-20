@@ -1,0 +1,10 @@
+# robots.txt for Gibry Perpustakaan Digital
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /passport
+Disallow: /attendance
+
+# Sitemap location
+Sitemap: https://gibry.id/sitemap.xml

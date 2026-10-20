@@ -1,0 +1,49 @@
+{
+  "rewrites": [
+    {
+      "source": "/((?!api/|assets/|covers/).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), geolocation=(self), microphone=()"
+        }
+      ]
+    }
+  ],
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "regions": [
+    "sin1"
+  ],
+  "functions": {
+    "api/[...path].js": {
+      "maxDuration": 60,
+      "includeFiles": "functions/server/**"
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/maintenance",
+      "schedule": "0 1 * * *"
+    }
+  ]
+}

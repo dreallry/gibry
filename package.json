@@ -1,0 +1,70 @@
+{
+  "name": "digipus",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:api": "node scripts/dev-api.cjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/unit.test.cjs tests/payment-reconciliation.test.cjs tests/rewards.test.cjs tests/frontend-startup.test.cjs tests/frontend-data.test.cjs tests/vercel-spark.test.cjs",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "test:integration": "node --test --test-concurrency=1 tests/database.test.cjs tests/social.test.cjs tests/api.test.cjs",
+    "migrate:data": "node scripts/migrate-data.cjs"
+  },
+  "dependencies": {
+    "@hugeicons/core-free-icons": "^4.2.3",
+    "@hugeicons/react": "^1.1.9",
+    "@radix-ui/react-scroll-area": "^1.2.18",
+    "@radix-ui/react-separator": "^1.1.15",
+    "@radix-ui/react-slot": "^1.3.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
+    "dotenv": "^17.4.2",
+    "firebase": "^11.10.0",
+    "firebase-admin": "^14.2.0",
+    "framer-motion": "^12.17.4",
+    "lucide-react": "^0.544.0",
+    "motion": "^13.0.0",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.1.0",
+    "react-day-picker": "^10.0.1",
+    "react-dom": "^19.1.0",
+    "react-is": "^19.1.0",
+    "react-router-dom": "^7.8.1",
+    "recharts": "^3.10.1",
+    "sonner": "^2.0.8",
+    "tailwind-merge": "^3.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.31.0",
+    "@tailwindcss/vite": "^4.1.8",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.7.0",
+    "eslint": "^9.31.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.21",
+    "globals": "^16.3.0",
+    "tailwindcss": "^4.1.8",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.38.0",
+    "vite": "^7.0.0"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "1.14.6",
+    "rimraf@^5.0.1": "6.1.3"
+  },
+  "allowScripts": {
+    "@firebase/util@1.12.1": true,
+    "@firebase/util@1.15.3": true,
+    "esbuild@0.28.1": true,
+    "protobufjs@7.6.5": true
+  },
+  "engines": {
+    "node": "^22.12.0"
+  }
+}

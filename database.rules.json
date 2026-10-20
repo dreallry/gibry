@@ -1,0 +1,550 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "daftar_buku": {
+      ".read": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')",
+      ".write": false
+    },
+    "book_status": {
+      ".read": true,
+      "$bookId": {
+        ".write": false,
+        ".validate": "newData.hasChild('status') && (newData.child('status').val() === 'Tersedia' || newData.child('status').val() === 'Dipinjam')"
+      }
+    },
+    "anggota": {
+      ".read": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && auth.token.email_verified === true) && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.exists() && !root.child('account_deletions').child($uid).exists() && root.child('member_actions').child($uid).child('closed').val() !== true",
+        ".validate": "newData.hasChildren(['nama','username','email','role','banned']) && newData.parent().parent().child('usernames').child(newData.child('username').val()).val() === auth.uid && (!newData.hasChild('invitationCodeId') || (newData.parent().parent().child('invitation_codes').child(newData.child('invitationCodeId').val()).child('usedBy').val() === auth.uid && newData.parent().parent().child('invitation_codes').child(newData.child('invitationCodeId').val()).child('isActive').val() === true && newData.parent().parent().child('invitation_codes').child(newData.child('invitationCodeId').val()).child('expiresAt').val() > now))",
+        "nama": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+        },
+        "username": {
+          ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)"
+        },
+        "email": {
+          ".validate": "newData.isString() && newData.val().length <= 320 && auth.token.email != null && newData.val().toLowerCase() === auth.token.email.toLowerCase()"
+        },
+        "role": {
+          ".validate": "newData.val() === 'user'"
+        },
+        "banned": {
+          ".validate": "newData.val() === false"
+        },
+        "totalPoints": {
+          ".validate": "newData.val() === 0"
+        },
+        "lifetimePoints": {
+          ".validate": "newData.val() === 0"
+        },
+        "walletRevision": {
+          ".validate": "newData.val() === 0"
+        },
+        "level": {
+          ".validate": "newData.val() === 1"
+        },
+        "likesCount": {
+          ".validate": "newData.val() === 0"
+        },
+        "kudosCount": {
+          ".validate": "newData.val() === 0"
+        },
+        "kelas": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "alamat": {
+          ".validate": "newData.isString() && newData.val().length <= 500"
+        },
+        "noTelp": {
+          ".validate": "newData.isString() && newData.val().length <= 50"
+        },
+        "invitationCodeId": {
+          ".validate": "newData.isString()"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber() && newData.val() <= now + 10000 && newData.val() >= now - 60000"
+        },
+        "$other": {
+          ".validate": false
+        }
+      },
+      ".indexOn": [
+        "role"
+      ]
+    },
+    "peminjaman": {
+      ".read": "((auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && auth.token.email_verified === true) && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')) || ((auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && auth.token.email_verified === true) && query.orderByChild === 'userId' && query.equalTo === auth.uid)",
+      ".indexOn": [
+        "userId",
+        "bookId",
+        "status",
+        "midtransOrderId"
+      ],
+      "$borrowId": {
+        ".read": "((auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && auth.token.email_verified === true) && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')) || (auth != null && data.child('userId').val() === auth.uid)",
+        ".write": false
+      }
+    },
+    "ulasan": {
+      ".read": true,
+      ".indexOn": [
+        "bookId",
+        "userId"
+      ],
+      "$reviewId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('userId').val() === auth.uid) || data.child('userId').val() === auth.uid || root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')",
+        ".validate": "newData.child('userId').isString() && ((!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && newData.child('userId').val() === data.child('userId').val()))"
+      }
+    },
+    "favorit_buku": {
+      ".read": "auth != null",
+      ".indexOn": [
+        "userId",
+        "bookId"
+      ],
+      "$favId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('userId').val() === auth.uid) || data.child('userId').val() === auth.uid || root.child('anggota').child(auth.uid).child('role').val() === 'admin')",
+        ".validate": "newData.child('userId').isString() && ((!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && newData.child('userId').val() === data.child('userId').val()))"
+      }
+    },
+    "wishlists": {
+      ".read": "auth != null",
+      ".indexOn": [
+        "userId",
+        "bookId"
+      ],
+      "$wishId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('userId').val() === auth.uid) || data.child('userId').val() === auth.uid || root.child('anggota').child(auth.uid).child('role').val() === 'admin')",
+        ".validate": "newData.child('userId').isString() && ((!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && newData.child('userId').val() === data.child('userId').val()))"
+      }
+    },
+    "daftar_hadir": {
+      ".read": "((auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && auth.token.email_verified === true) && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')) || ((auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && auth.token.email_verified === true) && query.orderByChild === 'userId' && query.equalTo === auth.uid)",
+      ".indexOn": [
+        "userId"
+      ],
+      "$attendanceId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('userId').val() === auth.uid) || data.child('userId').val() === auth.uid || root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')",
+        ".read": "((auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && auth.token.email_verified === true) && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')) || (auth != null && data.child('userId').val() === auth.uid)",
+        ".validate": "newData.child('userId').isString() && ((!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && newData.child('userId').val() === data.child('userId').val()))"
+      }
+    },
+    "pesan": {
+      "$chatRoomId": {
+        ".read": "auth != null && ($chatRoomId.beginsWith(auth.uid + '_') || $chatRoomId.endsWith('_' + auth.uid))",
+        "$msgId": {
+          ".write": "auth != null && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && ($chatRoomId.beginsWith(auth.uid + '_') || $chatRoomId.endsWith('_' + auth.uid)) && ((!data.exists() && newData.exists() && newData.child('senderId').val() === auth.uid && newData.child('read').val() === false) || (data.exists() && newData.exists() && data.child('senderId').val() === auth.uid && newData.child('senderId').val() === data.child('senderId').val() && newData.child('receiverId').val() === data.child('receiverId').val()) || (data.exists() && newData.exists() && data.child('receiverId').val() === auth.uid && newData.child('read').val() === true && newData.child('senderId').val() === data.child('senderId').val() && newData.child('receiverId').val() === data.child('receiverId').val() && newData.child('senderName').val() === data.child('senderName').val() && newData.child('text').val() === data.child('text').val() && newData.child('createdAt').val() === data.child('createdAt').val() && newData.child('deleted').val() === data.child('deleted').val() && newData.child('deletedAt').val() === data.child('deletedAt').val()) || (data.exists() && !newData.exists() && root.child('anggota').child(auth.uid).child('role').val() === 'admin'))",
+          ".validate": "newData.hasChildren(['senderId','receiverId','text','createdAt','read']) && newData.child('senderId').isString() && newData.child('receiverId').isString() && newData.child('senderId').val() !== newData.child('receiverId').val() && $chatRoomId === (newData.child('senderId').val() < newData.child('receiverId').val() ? newData.child('senderId').val() + '_' + newData.child('receiverId').val() : newData.child('receiverId').val() + '_' + newData.child('senderId').val()) && newData.child('text').isString() && newData.child('text').val().length <= 500 && newData.child('read').isBoolean()"
+        },
+        ".indexOn": [
+          "createdAt"
+        ]
+      }
+    },
+    "pertemanan": {
+      ".read": "auth != null",
+      "$friendId": {
+        ".write": "auth != null && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && ((!data.exists() && newData.exists() && newData.child('fromUserId').val() === auth.uid && newData.child('toUserId').val() !== auth.uid && newData.child('status').val() === 'pending') || (data.exists() && !newData.exists() && (data.child('fromUserId').val() === auth.uid || data.child('toUserId').val() === auth.uid)) || (data.exists() && newData.exists() && data.child('toUserId').val() === auth.uid && data.child('status').val() === 'pending' && (newData.child('status').val() === 'accepted' || newData.child('status').val() === 'declined')))",
+        ".validate": "newData.hasChildren(['fromUserId','toUserId','status','createdAt']) && newData.child('fromUserId').isString() && newData.child('toUserId').isString() && (!data.exists() || (newData.child('fromUserId').val() === data.child('fromUserId').val() && newData.child('toUserId').val() === data.child('toUserId').val() && newData.child('createdAt').val() === data.child('createdAt').val()))"
+      },
+      ".indexOn": [
+        "fromUserId",
+        "toUserId"
+      ]
+    },
+    "aktivitas": {
+      ".read": "auth != null",
+      "$activityId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('userId').val() === auth.uid) || root.child('anggota').child(auth.uid).child('role').val() === 'admin')"
+      },
+      ".indexOn": [
+        "userId"
+      ]
+    },
+    "notifikasi": {
+      "$userId": {
+        ".read": "auth != null && auth.uid === $userId",
+        "$notifId": {
+          ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.exists()) || (data.exists() && newData.exists() && auth.uid === $userId) || (data.exists() && !newData.exists() && auth.uid === $userId) || root.child('anggota').child(auth.uid).child('role').val() === 'admin')",
+          ".validate": "newData.hasChildren(['type','message','fromUserId','createdAt']) && newData.child('message').isString() && newData.child('message').val().length <= 300 && ((!data.exists() && newData.child('fromUserId').val() === auth.uid && (auth.uid === $userId || root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian' || newData.child('type').val() === 'friend_request' || newData.child('type').val() === 'friend_accepted' || newData.child('type').val() === 'message' || newData.child('type').val() === 'poke' || newData.child('type').val() === 'like' || newData.child('type').val() === 'club_invite')) || (data.exists() && auth.uid === $userId && newData.child('type').val() === data.child('type').val() && newData.child('message').val() === data.child('message').val() && newData.child('fromUserId').val() === data.child('fromUserId').val() && newData.child('createdAt').val() === data.child('createdAt').val() && newData.child('title').val() === data.child('title').val() && newData.child('body').val() === data.child('body').val() && newData.child('link').val() === data.child('link').val() && newData.child('userId').val() === data.child('userId').val()))"
+        },
+        ".indexOn": [
+          "createdAt"
+        ]
+      }
+    },
+    "book_clubs": {
+      ".read": "auth != null",
+      "$clubId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && (!data.exists() || data.child('createdBy').val() === auth.uid || root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')",
+        ".validate": "newData.hasChildren(['createdBy','name']) && (data.exists() || newData.child('createdBy').val() === auth.uid)"
+      },
+      ".indexOn": [
+        "createdBy"
+      ]
+    },
+    "club_members": {
+      ".read": "auth != null",
+      "$memberId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('userId').val() === auth.uid) || data.child('userId').val() === auth.uid || root.child('book_clubs').child(data.child('clubId').val()).child('createdBy').val() === auth.uid || root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian') && (data.exists() || $memberId === newData.child('clubId').val() + ':' + auth.uid)",
+        ".validate": "(newData.hasChildren(['userId','clubId','role']) && (data.exists() ? newData.child('userId').val() === data.child('userId').val() && newData.child('clubId').val() === data.child('clubId').val() : newData.child('userId').val() === auth.uid) && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian' || (root.child('book_clubs').child(newData.child('clubId').val()).child('createdBy').val() === auth.uid || (!data.exists() && newData.parent().parent().child('book_clubs').child(newData.child('clubId').val()).child('createdBy').val() === auth.uid)) || (!data.exists() && newData.child('role').val() === 'member') || (data.exists() && newData.child('role').val() === data.child('role').val()))) && newData.child('userId').isString() && newData.child('clubId').isString() && newData.parent().parent().child('book_clubs').child(newData.child('clubId').val()).exists() && (newData.child('role').val() === 'admin' || newData.child('role').val() === 'member')"
+      },
+      ".indexOn": [
+        "clubId",
+        "userId"
+      ]
+    },
+    "club_messages": {
+      ".read": "auth != null",
+      "$msgId": {
+        ".write": "(auth != null && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('userId').val() === auth.uid) || data.child('userId').val() === auth.uid || (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian') || (!newData.exists() && root.child('book_clubs').child(data.child('clubId').val()).child('createdBy').val() === auth.uid))",
+        ".validate": "newData.hasChildren(['userId','clubId','text','createdAt']) && newData.child('userId').isString() && newData.child('clubId').isString() && root.child('book_clubs').child(newData.child('clubId').val()).exists() && newData.child('text').isString() && newData.child('text').val().length <= 500 && (!data.exists() || (newData.child('userId').val() === data.child('userId').val() && newData.child('clubId').val() === data.child('clubId').val()))"
+      },
+      ".indexOn": [
+        "clubId",
+        "userId"
+      ]
+    },
+    "reading_notes": {
+      "$userId": {
+        ".read": "auth != null && auth.uid === $userId",
+        "$noteId": {
+          ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && auth.uid === $userId"
+        }
+      }
+    },
+    "challenges": {
+      ".read": true,
+      ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')"
+    },
+    "user_challenges": {
+      ".read": "auth != null",
+      "$ucId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('userId').val() === auth.uid) || data.child('userId').val() === auth.uid || root.child('anggota').child(auth.uid).child('role').val() === 'admin')",
+        ".validate": "newData.child('userId').isString() && ((!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && newData.child('userId').val() === data.child('userId').val()))"
+      },
+      ".indexOn": [
+        "userId"
+      ]
+    },
+    "seasonal_events": {
+      ".read": true,
+      ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')"
+    },
+    "user_event_progress": {
+      ".read": "auth != null",
+      "$progressId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('userId').val() === auth.uid) || data.child('userId').val() === auth.uid || root.child('anggota').child(auth.uid).child('role').val() === 'admin')",
+        ".validate": "newData.child('userId').isString() && ((!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && newData.child('userId').val() === data.child('userId').val()))"
+      },
+      ".indexOn": [
+        "userId"
+      ]
+    },
+    "rewards": {
+      ".read": true,
+      "$rewardId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')",
+        "stock": {
+          ".write": "auth != null && auth.token.email_verified === true && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')",
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        }
+      }
+    },
+    "reward_redemptions": {
+      ".read": "auth != null",
+      "$redemptionId": {
+        ".write": false,
+        ".validate": "newData.child('userId').isString() && ((!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && newData.child('userId').val() === data.child('userId').val()))"
+      },
+      ".indexOn": [
+        "userId"
+      ]
+    },
+    "reading_goals": {
+      "$userId": {
+        ".read": "auth != null && auth.uid === $userId",
+        "$goalId": {
+          ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && auth.uid === $userId"
+        }
+      }
+    },
+    "reading_lists": {
+      ".read": "(query.orderByChild === 'isPublic' && query.equalTo === true) || (auth != null && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && root.child('member_actions').child(auth.uid).child('closed').val() !== true && ((root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian') || (query.orderByChild === 'createdBy' && query.equalTo === auth.uid)))",
+      "$listId": {
+        ".read": "data.child('isPublic').val() === true || (auth != null && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && root.child('member_actions').child(auth.uid).child('closed').val() !== true && (data.child('createdBy').val() === auth.uid || (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')))",
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('createdBy').val() === auth.uid) || data.child('createdBy').val() === auth.uid || root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')",
+        ".validate": "newData.hasChildren(['title','isPublic','createdBy']) && newData.child('title').isString() && newData.child('title').val().length <= 300 && newData.child('isPublic').isBoolean() && newData.child('createdBy').isString() && (!data.exists() || newData.child('createdBy').val() === data.child('createdBy').val())"
+      },
+      ".indexOn": [
+        "createdBy",
+        "isPublic"
+      ]
+    },
+    "book_discussions": {
+      ".read": true,
+      "$discId": {
+        ".write": "(auth != null && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('userId').val() === auth.uid && !newData.hasChild('likedBy')) || (data.exists() && (data.child('userId').val() === auth.uid || (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')) && (!newData.exists() || (newData.child('likedBy').val() === data.child('likedBy').val()))))",
+        ".validate": "newData.hasChildren(['userId','bookId','text']) && newData.child('text').isString() && newData.child('text').val().length <= 2000 && (!data.exists() || newData.child('userId').val() === data.child('userId').val())",
+        "likedBy": {
+          "$uid": {
+            ".write": "(auth != null && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && auth.uid === $uid && root.child('book_discussions').child($discId).exists()",
+            ".validate": "auth.uid === $uid && newData.val() === true"
+          }
+        }
+      },
+      ".indexOn": [
+        "bookId",
+        "userId"
+      ]
+    },
+    "book_reservations": {
+      ".read": "auth != null",
+      "$resId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('userId').val() === auth.uid) || data.child('userId').val() === auth.uid || root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')",
+        ".validate": "newData.child('userId').isString() && ((!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && newData.child('userId').val() === data.child('userId').val()))"
+      },
+      ".indexOn": [
+        "userId",
+        "bookId",
+        "status"
+      ]
+    },
+    "announcements": {
+      ".read": "auth != null",
+      ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')"
+    },
+    "online": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && auth.uid === $uid"
+      }
+    },
+    "typing": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && auth.uid === $uid"
+      }
+    },
+    "pencapaian": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && (auth.uid === $uid || root.child('anggota').child(auth.uid).child('role').val() === 'admin')",
+        "$achievementId": {
+          ".validate": "newData.hasChildren(['type', 'title'])"
+        }
+      }
+    },
+    "availability_subscriptions": {
+      ".read": "auth != null",
+      "$subId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('userId').val() === auth.uid) || data.child('userId').val() === auth.uid || root.child('anggota').child(auth.uid).child('role').val() === 'admin')",
+        ".validate": "newData.child('userId').isString() && ((!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && newData.child('userId').val() === data.child('userId').val()))"
+      },
+      ".indexOn": [
+        "userId"
+      ]
+    },
+    "user_bans": {
+      ".read": "auth != null && root.child('anggota').child(auth.uid).child('role').val() === 'admin'",
+      ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && root.child('anggota').child(auth.uid).child('role').val() === 'admin'"
+    },
+    "user_likes": {
+      ".read": "auth != null",
+      ".write": false
+    },
+    "user_likes_count": {
+      ".read": "auth != null",
+      ".write": false
+    },
+    "user_points": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.child('totalPoints').val() === 0 && newData.child('level').val() === 1 && !newData.hasChild('revision') && !root.child('account_deletions').child($uid).exists() && root.child('member_actions').child($uid).child('closed').val() !== true",
+        "totalPoints": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian' || (!data.exists() && newData.val() === 0) || (data.exists() && newData.val() >= data.val() - 500 && newData.val() <= data.val() + 50))"
+        }
+      }
+    },
+    "presensi_config": {
+      ".read": "auth != null",
+      ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')"
+    },
+    "komunitas_post": {
+      ".read": "auth != null",
+      ".indexOn": [
+        "userId",
+        "type",
+        "createdAt"
+      ],
+      "$postId": {
+        ".write": "(auth != null && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('userId').val() === auth.uid && !newData.hasChild('likedBy') && !newData.hasChild('savedBy')) || (data.exists() && (data.child('userId').val() === auth.uid || (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')) && (!newData.exists() || (newData.child('likedBy').val() === data.child('likedBy').val() && newData.child('savedBy').val() === data.child('savedBy').val()))))",
+        ".validate": "newData.child('userId').isString() && ((!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && newData.child('userId').val() === data.child('userId').val()))",
+        "likedBy": {
+          "$uid": {
+            ".write": "(auth != null && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && auth.uid === $uid && root.child('komunitas_post').child($postId).exists()",
+            ".validate": "auth.uid === $uid && newData.val() === true"
+          }
+        },
+        "savedBy": {
+          "$uid": {
+            ".write": "(auth != null && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && auth.uid === $uid && root.child('komunitas_post').child($postId).exists()",
+            ".validate": "auth.uid === $uid && newData.val() === true"
+          }
+        }
+      }
+    },
+    "komunitas_balasan": {
+      ".read": "auth != null && auth.token.email_verified === true && root.child('anggota').child(auth.uid).child('banned').val() !== true",
+      "$postId": {
+        ".write": "auth != null && auth.token.email_verified === true && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && !newData.exists() && (root.child('komunitas_post').child($postId).child('userId').val() === auth.uid || root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')",
+        "$replyId": {
+          ".write": "(auth != null && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('userId').val() === auth.uid) || data.child('userId').val() === auth.uid || (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian'))",
+          ".validate": "newData.hasChildren(['userId','postId','text','createdAt']) && newData.child('postId').val() === $postId && newData.child('text').isString() && newData.child('text').val().length <= 2000 && (!data.exists() || newData.child('userId').val() === data.child('userId').val())"
+        }
+      }
+    },
+    "user_saved_quotes": {
+      "$userId": {
+        ".read": "auth != null && auth.uid === $userId",
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && auth.uid === $userId"
+      }
+    },
+    "content_reports": {
+      ".read": "auth != null && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')",
+      "$reportId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.child('reporterId').val() === auth.uid) || root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')"
+      }
+    },
+    "user_blocks": {
+      "$blockerId": {
+        ".read": "auth != null && auth.uid === $blockerId",
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && auth.uid === $blockerId"
+      }
+    },
+    "usernames": {
+      ".read": false,
+      "$username": {
+        ".read": true,
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated') && (((!data.exists() && newData.val() === auth.uid && newData.parent().parent().child('anggota').child(auth.uid).child('username').val() === $username) || root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')) && !root.child('account_deletions').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true"
+      }
+    },
+    "invitation_codes": {
+      ".read": "auth != null && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')",
+      "$codeId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated') && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')",
+        "usedBy": {
+          ".write": "auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && !data.exists() && newData.val() === auth.uid && newData.parent().parent().parent().child('anggota').child(auth.uid).child('invitationCodeId').val() === $codeId && root.child('invitation_codes').child($codeId).child('isActive').val() === true && root.child('invitation_codes').child($codeId).child('expiresAt').val() > now && !root.child('invitation_codes').child($codeId).child('usedBy').exists()",
+          ".validate": "newData.isString()"
+        },
+        "usedAt": {
+          ".write": "auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && !data.exists() && newData.parent().child('usedBy').val() === auth.uid && newData.parent().parent().parent().child('anggota').child(auth.uid).child('invitationCodeId').val() === $codeId && root.child('invitation_codes').child($codeId).child('isActive').val() === true && root.child('invitation_codes').child($codeId).child('expiresAt').val() > now && !root.child('invitation_codes').child($codeId).child('usedBy').exists()",
+          ".validate": "newData.isNumber() && newData.val() <= now + 10000"
+        }
+      }
+    },
+    "invitation_code_lookup": {
+      "$code": {
+        ".read": true,
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && (root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')"
+      }
+    },
+    "book_suggestions": {
+      ".read": "auth != null",
+      "$suggestionId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && ((!data.exists() && newData.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && !newData.exists() && data.child('userId').val() === auth.uid) || root.child('anggota').child(auth.uid).child('role').val() === 'admin' || root.child('anggota').child(auth.uid).child('role').val() === 'librarian')",
+        ".validate": "newData.hasChildren(['userId', 'title', 'reason', 'createdAt']) && newData.child('title').val().length <= 200 && newData.child('reason').val().length <= 300"
+      }
+    },
+    "book_suggestion_votes": {
+      ".read": "auth != null",
+      "$suggestionId": {
+        "$voterId": {
+          ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && auth.uid === $voterId",
+          ".validate": "newData.val() === true"
+        }
+      }
+    },
+    "audit_log": {
+      ".read": "auth != null && root.child('anggota').child(auth.uid).child('role').val() === 'admin'",
+      "$logId": {
+        ".write": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && root.child('anggota').child(auth.uid).child('status').val() !== 'deactivated' && auth.token.email_verified === true && root.child('anggota').child(auth.uid).exists() && root.child('member_actions').child(auth.uid).child('closed').val() !== true) && !data.exists() && newData.child('userId').val() === auth.uid",
+        ".validate": "newData.hasChildren(['action', 'userId', 'timestamp'])"
+      }
+    },
+    "public_profiles": {
+      ".read": "(auth != null && root.child('anggota').child(auth.uid).child('banned').val() !== true && auth.token.email_verified === true)",
+      ".write": false
+    },
+    "public_stats": {
+      ".read": true,
+      ".write": false
+    },
+    "book_locks": {
+      ".read": false,
+      ".write": false
+    },
+    "user_active_borrows": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": false
+      }
+    },
+    "payment_orders": {
+      ".read": false,
+      ".write": false,
+      ".indexOn": [
+        "userId",
+        "status",
+        "reconcileAt"
+      ]
+    },
+    "payment_intents": {
+      ".read": false,
+      ".write": false
+    },
+    "point_wallets": {
+      ".read": false,
+      ".write": false
+    },
+    "redemption_actions": {
+      ".read": false,
+      ".write": false
+    },
+    "reward_stock_refunds": {
+      ".read": false,
+      ".write": false
+    },
+    "account_deletions": {
+      ".read": false,
+      ".write": false,
+      ".indexOn": [
+        "status"
+      ]
+    },
+    "public_books": {
+      ".read": true,
+      ".write": false,
+      ".indexOn": [
+        "genre",
+        "isbn",
+        "type"
+      ]
+    },
+    "profile_like_claims": {
+      ".read": false,
+      ".write": false
+    },
+    "profile_like_counts": {
+      ".read": false,
+      ".write": false
+    },
+    "member_actions": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}
