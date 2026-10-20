@@ -7,12 +7,9 @@
     "dev": "vite",
     "dev:api": "node scripts/dev-api.cjs",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/unit.test.cjs tests/payment-reconciliation.test.cjs tests/rewards.test.cjs tests/frontend-startup.test.cjs tests/frontend-data.test.cjs tests/vercel-spark.test.cjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "test:integration": "node --test --test-concurrency=1 tests/database.test.cjs tests/social.test.cjs tests/api.test.cjs",
-    "migrate:data": "node scripts/migrate-data.cjs"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@hugeicons/core-free-icons": "^4.2.3",

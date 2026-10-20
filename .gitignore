@@ -49,6 +49,23 @@ coverage/
 *.zip
 *.7z
 
+# Local-only verification and legacy maintenance tools
+/tests/
+/scripts/migrate-data.cjs
+/functions/src/
+/functions/package.json
+/functions/package-lock.json
+/functions/tsconfig.json
+/functions/tsconfig.dev.json
+/functions/.eslintrc.js
+/functions/.gitignore
+/firestore.rules
+/firestore.indexes.json
+/storage.rules
+/.firebaserc
+/public/frames/test/
+/api/package-lock.json
+
 # OS files
 .DS_Store
 Thumbs.db

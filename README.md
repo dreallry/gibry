@@ -13,7 +13,7 @@ The configured deployment target is Vercel with Firebase Authentication and Real
 - [Getting Started](#getting-started)
 - [Environment Variables](#environment-variables)
 - [Scripts](#scripts)
-- [Testing](#testing)
+- [Verification](#verification)
 - [Deployment](#deployment)
 - [Security Notes](#security-notes)
 - [Troubleshooting](#troubleshooting)
@@ -87,7 +87,7 @@ functions/server/*.cjs                    whitelisted endpoint handlers
 Firebase Auth + Realtime Database         protected by database.rules.json
 ```
 
-Data access is separated per feature in `src/lib/`. `firestore.ts` is a compatibility facade over Realtime Database, kept so feature modules keep a stable interface. `functions/src/index.ts` is a legacy Firebase Functions adapter, outside the active deploy target.
+Data access is separated per feature in `src/lib/`. `firestore.ts` is a compatibility facade over Realtime Database, kept so feature modules keep a stable interface. The active API requires `functions/server/`; this directory must not be removed. Legacy Firebase Functions tooling is excluded from the published checkout.
 
 Security-relevant details:
 
@@ -102,7 +102,7 @@ Security-relevant details:
 ```
 api/[...path].js            Vercel serverless entry, endpoint whitelist
 functions/server/           API business modules (.cjs)
-functions/src/              legacy Firebase Functions adapter (unused in deploys)
+
 src/                        React SPA
   Application.tsx, App.tsx  shell and routes
   pages/                    page components per route
@@ -110,12 +110,11 @@ src/                        React SPA
   lib/                      per-feature data access and domain logic
   hooks/                    shared hooks
   contexts/                 auth and admin-view contexts
-scripts/                    local API dev server, data migration
-tests/                      unit (.test.cjs) and integration tests
+scripts/dev-api.cjs          local API development server
 public/                     static assets, cover art, avatar frames
 firebase.json, vercel.json  hosting and deployment config
 database.rules.json         Realtime Database rules
-firestore.rules, storage.rules, firestore.indexes.json   legacy references
+
 ```
 
 ## Getting Started
@@ -189,35 +188,24 @@ For local `.env` files, keep `FIREBASE_SERVICE_ACCOUNT` on one line as valid JSO
 | `npm run dev:api` | Local API server on 127.0.0.1:3000 |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
-| `npm test` | Unit tests with `node --test` |
-| `npm run test:integration` | Emulator-backed integration tests, sequential |
+
 | `npm run build` | Type-check project references, then Vite production build to `dist` |
 | `npm run preview` | Preview the production build |
-| `npm run migrate:data` | Migrate a legacy database catalog, points, loans (see below) |
 
-## Testing
 
-Unit tests run without external services:
+## Verification
 
-```powershell
-npm test
-```
+The published checkout contains application source, required runtime assets, and build/deployment configuration. Automated tests remain local to the maintainer and npm test commands are intentionally not included in this checkout.
 
-Integration tests need Java and the Firebase CLI. Start the emulators first:
+Before deploying, run:
 
 ```powershell
-firebase emulators:start --only "database,auth" --project demo-digipus
+npm run typecheck
+npm run lint
+npm run build
 ```
 
-Then run with the emulator hosts set:
-
-```powershell
-$env:FIREBASE_DATABASE_EMULATOR_HOST='127.0.0.1:9018'
-$env:FIREBASE_AUTH_EMULATOR_HOST='127.0.0.1:9098'
-npm run test:integration
-```
-
-The tests only accept the loopback `demo-digipus` emulator, delete emulator fixtures between runs, and never touch the production project or a real payment gateway. `permission_denied` failures in access-rejection tests are expected outcomes.
+A successful build is not an end-to-end integration test. Real Firebase and Midtrans connections do not replace automated testing. Verify sign-in, permissions, circulation, and payment notifications in isolated staging environments. Do not create real payments merely to verify repository cleanup. `npm run preview` serves static files only and does not start the API.
 
 ## Deployment
 
@@ -232,20 +220,9 @@ Target setup: Vercel for hosting and the serverless API, Firebase for Authentica
 
 Alternatively, deploy the static `dist` folder to Firebase Hosting using the `hosting` target in `firebase.json`; member actions still need the server API, which is not provided by that free-tier hosting.
 
-### Migrating an existing database
+### Payment environments
 
-```powershell
-npm run migrate:data -- --project=PROJECT_ID --points=reviewed
-```
-
-The script refuses to write without `--apply`. `reviewed` keeps previously reviewed point balances; use `reset` only when balances may be discarded. Inspect the results on a staging copy first. After resolving conflicts, with a database backup taken and writes paused:
-
-```powershell
-npm run migrate:data -- --project=PROJECT_ID --points=reviewed --maintenance --apply
-firebase deploy --only database --project PROJECT_ID
-```
-
-The migration prepares the catalog, public profiles, the points ledger, loan keys, and digital availability timestamps. The project owner registers the first admin account; browser registration always creates a regular member.
+The template defaults to Midtrans sandbox mode. Production payments require production keys, matching browser/server environment flags, and provider-side configuration. A repository push does not configure or verify these external services. Browser registration creates a regular member; assign privileged roles only through an authorized administrative process.
 
 ## Security Notes
 
@@ -258,6 +235,8 @@ The migration prepares the catalog, public profiles, the points ledger, loan key
 ### Publishing safely
 
 The ignore rules exclude local environment files, common private-key and service-account filenames, dependencies, build artifacts, deployment metadata, logs, database dumps, backups, uploads, and local school-work exports. `.env.example` contains configuration names and placeholders, not credentials.
+
+Local test suites, legacy Firebase Functions tooling, inactive Firestore/Storage rules, Firebase project aliases, migration tooling, and frame-preview assets are excluded from the current published tree. Active server modules, database rules, manifests, lockfiles, and build configuration remain. Runtime artwork and book covers are retained because database records may reference them dynamically. Untracking files does not erase earlier commits.
 
 Before publishing a change:
 
@@ -285,11 +264,11 @@ Firebase browser configuration and the Midtrans client key are intentionally bro
 | Request rejected because of its origin | Add the exact browser origin, including protocol and port, to `ALLOWED_ORIGINS`. |
 | Member action rejected | Check sign-in, email verification, membership state, and role. Sensitive account actions can require a fresh login. |
 | Midtrans checkout or notification fails | Use matching sandbox keys, keep both production flags `false`, and configure the publicly reachable webhook URL. |
-| Integration tests cannot connect | Start the local Auth and Database emulators and set the loopback host variables shown above. |
+
 | Static deployment loads but actions fail | Static hosting and `npm run preview` do not provide the server API. Deploy/configure the API separately. |
 
 ## Contributing and Licensing
 
-Keep changes focused, use `.env.example` for configuration names only, and run unit tests, type checking, linting, and a production build before submitting changes. Run emulator-backed integration tests when modifying database rules or backend behavior. Do not include personal data, database exports, credentials, or generated files in pull requests.
+Keep changes focused, use `.env.example` for configuration names only, and run type checking, linting, and a production build before submitting changes. Maintainers should also run their local automated tests when modifying application behavior. Do not include personal data, database exports, credentials, or generated files in pull requests.
 
 No license file is included in this repository. Do not assume permission to redistribute the application or its bundled artwork and book-cover images; obtain the relevant permissions before reuse or public distribution.
